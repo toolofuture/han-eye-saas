@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: han-eye-saas
+    runtime: python
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.7
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: han-eye-db
+          property: connectionString
+    
+databases:
+  - name: han-eye-db
+    plan: free
+    databaseName: han_eye
+    user: han_eye_user
+
