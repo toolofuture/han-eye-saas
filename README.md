@@ -105,7 +105,7 @@ AI가 자신의 판단을 재평가하고 개선하는 순환 학습 시스템
 1. **저장소 클론**
 
 ```bash
-git clone https://github.com/yourusername/han-eye-saas.git
+git clone https://github.com/toolofuture/han-eye-saas.git
 cd han-eye-saas
 ```
 
@@ -363,7 +363,7 @@ Han.Eye 프로젝트에 기여해주셔서 감사합니다!
 
 - **Email**: contact@han-eye.com
 - **Website**: https://han-eye.com
-- **Project Link**: https://github.com/yourusername/han-eye-saas
+- **Project Link**: https://github.com/toolofuture/han-eye-saas
 
 ## 🙏 감사의 말
 
@@ -374,4 +374,3 @@ Han.Eye 프로젝트에 기여해주셔서 감사합니다!
 ---
 
 **Han.Eye** - *예술과 AI가 만나 더 투명하고 신뢰할 수 있는 미술 시장을 만듭니다*
-
