@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}대시보드 - Han.Eye{% endblock %}
+
+{% block content %}
+<section class="dashboard-section py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="fw-bold">대시보드</h1>
+                <p class="text-muted">안녕하세요, {{ current_user.username }}님!</p>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('main.analyze') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>새로운 분석
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">총 분석</h6>
+                                <h2 class="fw-bold mb-0">{{ stats.total }}</h2>
+                            </div>
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary p-3 rounded">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">진품</h6>
+                                <h2 class="fw-bold mb-0 text-success">{{ stats.authentic }}</h2>
+                            </div>
+                            <div class="icon-box bg-success bg-opacity-10 text-success p-3 rounded">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">위작</h6>
+                                <h2 class="fw-bold mb-0 text-danger">{{ stats.fake }}</h2>
+                            </div>
+                            <div class="icon-box bg-danger bg-opacity-10 text-danger p-3 rounded">
+                                <i class="fas fa-times-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">불확실</h6>
+                                <h2 class="fw-bold mb-0 text-warning">{{ stats.uncertain }}</h2>
+                            </div>
+                            <div class="icon-box bg-warning bg-opacity-10 text-warning p-3 rounded">
+                                <i class="fas fa-question-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Analyses -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">최근 분석</h5>
+                    <a href="{{ url_for('main.history') }}" class="text-decoration-none">
+                        전체보기 <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if analyses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>이미지</th>
+                                    <th>파일명</th>
+                                    <th>결과</th>
+                                    <th>확신도</th>
+                                    <th>AI 모델</th>
+                                    <th>분석일</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in analyses %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-image fa-2x text-muted"></i>
+                                    </td>
+                                    <td>{{ analysis.image_filename }}</td>
+                                    <td>
+                                        {% if analysis.is_authentic == True %}
+                                            <span class="badge bg-success">진품</span>
+                                        {% elif analysis.is_authentic == False %}
+                                            <span class="badge bg-danger">위작</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">불확실</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ (analysis.confidence_score * 100) }}%"
+                                                 aria-valuenow="{{ (analysis.confidence_score * 100) }}" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.1f"|format(analysis.confidence_score * 100) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ analysis.ai_model_used }}</td>
+                                    <td>{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('main.analysis_result', analysis_id=analysis.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">아직 분석 기록이 없습니다.</p>
+                        <a href="{{ url_for('main.analyze') }}" class="btn btn-primary">
+                            첫 분석 시작하기
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

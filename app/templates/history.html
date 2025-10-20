@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}분석 기록 - Han.Eye{% endblock %}
+
+{% block content %}
+<section class="history-section py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="fw-bold">분석 기록</h1>
+                <p class="text-muted">전체 {{ pagination.total }}개의 분석</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                {% if pagination.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>파일명</th>
+                                    <th>결과</th>
+                                    <th>확신도</th>
+                                    <th>이상탐지</th>
+                                    <th>AI 모델</th>
+                                    <th>분석일</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in pagination.items %}
+                                <tr>
+                                    <td>#{{ analysis.id }}</td>
+                                    <td>{{ analysis.image_filename }}</td>
+                                    <td>
+                                        {% if analysis.is_authentic == True %}
+                                            <span class="badge bg-success">진품</span>
+                                        {% elif analysis.is_authentic == False %}
+                                            <span class="badge bg-danger">위작</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">불확실</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ "%.1f"|format(analysis.confidence_score * 100) }}%</td>
+                                    <td>
+                                        {% if analysis.anomaly_score %}
+                                            {{ "%.1f"|format(analysis.anomaly_score * 100) }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ analysis.ai_model_used }}</td>
+                                    <td>{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('main.analysis_result', analysis_id=analysis.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if pagination.pages > 1 %}
+                    <div class="p-3">
+                        <nav>
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if pagination.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.history', page=pagination.prev_num) }}">이전</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                    {% if page_num %}
+                                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('main.history', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if pagination.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.history', page=pagination.next_num) }}">다음</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">분석 기록이 없습니다.</p>
+                        <a href="{{ url_for('main.analyze') }}" class="btn btn-primary">
+                            첫 분석 시작하기
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

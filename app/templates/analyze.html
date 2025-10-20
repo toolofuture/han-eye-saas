@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}분석하기 - Han.Eye{% endblock %}
+
+{% block content %}
+<section class="analyze-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h3 class="mb-0">
+                            <i class="fas fa-search me-2"></i>미술품 진위 분석
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" action="{{ url_for('main.analyze') }}" enctype="multipart/form-data" id="analyzeForm">
+                            <!-- Image Upload -->
+                            <div class="mb-4">
+                                <label for="artwork_image" class="form-label fw-bold">
+                                    미술품 이미지 <span class="text-danger">*</span>
+                                </label>
+                                <div class="upload-area border border-2 border-dashed rounded p-5 text-center" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt fa-4x text-muted mb-3"></i>
+                                    <p class="text-muted mb-2">이미지를 드래그하거나 클릭하여 업로드</p>
+                                    <input type="file" class="form-control d-none" id="artwork_image" name="artwork_image" 
+                                           accept="image/*" required>
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('artwork_image').click()">
+                                        파일 선택
+                                    </button>
+                                </div>
+                                <div id="imagePreview" class="mt-3 d-none">
+                                    <img id="previewImg" class="img-fluid rounded" style="max-height: 300px;">
+                                    <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeImage()">
+                                        <i class="fas fa-times"></i> 제거
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- AI Model Selection -->
+                            <div class="mb-4">
+                                <label for="ai_model" class="form-label fw-bold">AI 모델 선택</label>
+                                <select class="form-select" id="ai_model" name="ai_model">
+                                    <option value="gpt-4" selected>GPT-4 (권장)</option>
+                                    <option value="claude">Claude</option>
+                                    <option value="gemini">Gemini</option>
+                                </select>
+                                <small class="text-muted">각 AI 모델마다 다른 분석 방식을 사용합니다</small>
+                            </div>
+
+                            <!-- Optional Context -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">추가 정보 (선택사항)</h5>
+                                <p class="text-muted small">더 정확한 분석을 위해 작품 정보를 입력할 수 있습니다</p>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="artist" class="form-label">작가</label>
+                                        <input type="text" class="form-control" id="artist" name="artist" 
+                                               placeholder="예: Vincent van Gogh">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="period" class="form-label">시대</label>
+                                        <input type="text" class="form-control" id="period" name="period" 
+                                               placeholder="예: 19세기 후반">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="medium" class="form-label">매체/재료</label>
+                                        <input type="text" class="form-control" id="medium" name="medium" 
+                                               placeholder="예: 캔버스에 유화">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Re-flexion Option -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enable_reflexion" name="enable_reflexion">
+                                    <label class="form-check-label" for="enable_reflexion">
+                                        <strong>Re-flexion 자기개선 활성화</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            AI가 자신의 판단을 재평가하고 개선합니다 (처리 시간 증가)
+                                        </small>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-search me-2"></i>분석 시작
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="alert alert-info mt-4" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>분석 정보
+                    </h5>
+                    <ul class="mb-0">
+                        <li>지원 형식: PNG, JPG, JPEG, GIF, WEBP</li>
+                        <li>최대 파일 크기: 16MB</li>
+                        <li>분석 시간: 약 10-30초 (Re-flexion 활성화 시 1-2분)</li>
+                        <li>현재 정확도: 50% 이상 (지속적으로 향상 중)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image preview functionality
+document.getElementById('artwork_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function removeImage() {
+    document.getElementById('artwork_image').value = '';
+    document.getElementById('imagePreview').classList.add('d-none');
+}
+
+// Form submission handling
+document.getElementById('analyzeForm').addEventListener('submit', function() {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>분석 중...';
+});
+</script>
+{% endblock %}
+

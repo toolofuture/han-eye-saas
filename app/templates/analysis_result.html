@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}분석 결과 - Han.Eye{% endblock %}
+
+{% block content %}
+<section class="result-section py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Main Result -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h4 class="mb-0 fw-bold">분석 결과</h4>
+                        <small class="text-muted">분석 ID: #{{ analysis.id }}</small>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Result Badge -->
+                        <div class="text-center mb-4">
+                            {% if analysis.is_authentic == True %}
+                                <div class="result-badge authentic">
+                                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                                    <h2 class="text-success">진품 가능성 높음</h2>
+                                </div>
+                            {% elif analysis.is_authentic == False %}
+                                <div class="result-badge fake">
+                                    <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                                    <h2 class="text-danger">위작 의심</h2>
+                                </div>
+                            {% else %}
+                                <div class="result-badge uncertain">
+                                    <i class="fas fa-question-circle fa-4x text-warning mb-3"></i>
+                                    <h2 class="text-warning">판단 불확실</h2>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confidence Score -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold">확신도</span>
+                                <span class="fw-bold">{{ "%.1f"|format(analysis.confidence_score * 100) }}%</span>
+                            </div>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if analysis.confidence_score >= 0.7 %}bg-success{% elif analysis.confidence_score >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ (analysis.confidence_score * 100) }}%">
+                                    {{ "%.1f"|format(analysis.confidence_score * 100) }}%
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Anomaly Score -->
+                        {% if analysis.anomaly_score %}
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold">이상탐지 점수</span>
+                                <span class="fw-bold">{{ "%.1f"|format(analysis.anomaly_score * 100) }}%</span>
+                            </div>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar bg-info" 
+                                     role="progressbar" 
+                                     style="width: {{ (analysis.anomaly_score * 100) }}%">
+                                    {{ "%.1f"|format(analysis.anomaly_score * 100) }}%
+                                </div>
+                            </div>
+                            <small class="text-muted">높을수록 의심스러운 패턴이 더 많이 발견됨</small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Analysis Details -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">분석 상세</h5>
+                            
+                            {% set result_dict = analysis.get_analysis_result_dict() %}
+                            {% if result_dict.reasoning %}
+                            <div class="alert alert-light">
+                                <h6 class="fw-bold">판단 근거</h6>
+                                <p class="mb-0">{{ result_dict.reasoning }}</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Style Analysis -->
+                            {% set style = analysis.get_style_analysis_dict() %}
+                            {% if style %}
+                            <div class="mb-3">
+                                <h6 class="fw-bold">스타일 분석</h6>
+                                <ul class="list-unstyled">
+                                    {% for key, value in style.items() %}
+                                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <!-- Technical Analysis -->
+                            {% set tech = analysis.get_technique_analysis_dict() %}
+                            {% if tech %}
+                            <div class="mb-3">
+                                <h6 class="fw-bold">기술적 분석</h6>
+                                <ul class="list-unstyled">
+                                    {% for key, value in tech.items() %}
+                                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <!-- Suspicious Elements -->
+                            {% if result_dict.suspicious_elements %}
+                            <div class="alert alert-warning">
+                                <h6 class="fw-bold">의심되는 요소</h6>
+                                <ul class="mb-0">
+                                    {% for element in result_dict.suspicious_elements %}
+                                    <li>{{ element }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Re-flexion Logs -->
+                        {% if reflexion_logs %}
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-brain me-2"></i>Re-flexion 자기개선 기록
+                            </h5>
+                            {% for log in reflexion_logs %}
+                            <div class="card mb-2">
+                                <div class="card-header bg-light">
+                                    <strong>반복 #{{ log.iteration }}</strong>
+                                    <span class="badge bg-primary float-end">
+                                        확신도 {{ "%+.1f"|format(log.confidence_delta * 100) }}%
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    {% set eval_dict = log.get_self_evaluation_dict() %}
+                                    <p class="mb-1"><strong>자기평가:</strong> {{ eval_dict.confidence_assessment }}</p>
+                                    <p class="mb-0"><small class="text-muted">{{ eval_dict.reasoning }}</small></p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Feedback Form -->
+                        <div class="border-top pt-4">
+                            <h5 class="fw-bold mb-3">피드백</h5>
+                            <p class="text-muted">분석 결과에 대한 피드백을 제공해주세요</p>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-success" onclick="submitFeedback('correct')">
+                                    <i class="fas fa-check me-1"></i>정확함
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="submitFeedback('incorrect')">
+                                    <i class="fas fa-times me-1"></i>부정확함
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" onclick="submitFeedback('uncertain')">
+                                    <i class="fas fa-question me-1"></i>잘 모르겠음
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Image Preview -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold">분석 이미지</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-image fa-5x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{{ analysis.image_filename }}</p>
+                    </div>
+                </div>
+
+                <!-- Analysis Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold">분석 정보</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-robot me-2 text-muted"></i>
+                                <strong>AI 모델:</strong> {{ analysis.ai_model_used }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock me-2 text-muted"></i>
+                                <strong>처리 시간:</strong> {{ "%.2f"|format(analysis.processing_time) }}초
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-calendar me-2 text-muted"></i>
+                                <strong>분석일:</strong> {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="runReflexion()">
+                                <i class="fas fa-sync me-2"></i>Re-flexion 실행
+                            </button>
+                            <a href="{{ url_for('main.analyze') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-2"></i>새로운 분석
+                            </a>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>대시보드로
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitFeedback(feedback) {
+    fetch('/api/analysis/{{ analysis.id }}/feedback', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            feedback: feedback,
+            expert_verification: false
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('피드백이 저장되었습니다. 감사합니다!');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function runReflexion() {
+    if (confirm('Re-flexion을 실행하시겠습니까? 1-2분 정도 소요될 수 있습니다.')) {
+        fetch('/api/reflexion/{{ analysis.id }}', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Re-flexion이 완료되었습니다. 페이지를 새로고침합니다.');
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+</script>
+{% endblock %}
+
